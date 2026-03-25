@@ -32,3 +32,15 @@ If gstack skills aren't working, run `cd .claude/skills/gstack && ./setup` to bu
 - `/guard` — Full safety mode (careful + freeze combined)
 - `/unfreeze` — Clear freeze boundary
 - `/gstack-upgrade` — Upgrade gstack to latest version
+
+## Design System
+Always read DESIGN.md before making any visual or UI decisions.
+All font choices, colors, spacing, and aesthetic direction are defined there.
+Do not deviate without explicit user approval.
+In QA mode, flag any code that doesn't match DESIGN.md.
+
+Key tokens at a glance:
+- Fonts: EB Garamond (logo/display/headers), Instrument Sans (UI/body), Geist Mono (data/numbers)
+- Colors: Navy #0A1628 (text), Blue #2563EB (CTAs only), White #FFFFFF (bg), #FAFAFA (surface), #E5E7EB (border)
+- Semantic: Success #16A34A, Warning #D97706, Danger #DC2626
+- Radius: sm=4px, md=6px, lg=8px

@@ -9,7 +9,25 @@
       "Bash(npx create-next-app@14 . --typescript --eslint --tailwind --app --no-src-dir --no-turbopack --import-alias \"@/*\")",
       "Bash(npx create-next-app@14 markman-tmp --typescript --eslint --tailwind --app --no-src-dir --no-turbopack --import-alias \"@/*\" --yes)",
       "Bash(npm install:*)",
-      "Bash(npx shadcn@4.0.8 init --defaults)"
+      "Bash(npx shadcn@4.0.8 init --defaults)",
+      "Bash(node node_modules/next/dist/bin/next build)",
+      "mcp__Claude_Preview__preview_start",
+      "Skill(plan-design-review)",
+      "Skill(plan-design-review:*)",
+      "Skill(design-consultation)",
+      "Skill(design-consultation:*)",
+      "Bash(open /tmp/markman-design-preview.html)",
+      "Bash(python3 -m json.tool)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); hooks=d.get\\(''''hooks'''',{}\\); [print\\(json.dumps\\(v,indent=2\\)\\) for k,v in hooks.items\\(\\)]\")",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\(''/Users/rodrigocasanovaaleman/.claude/settings.json''\\)\\); print\\(list\\(d.keys\\(\\)\\)\\)\")",
+      "Skill(plan-ceo-review)",
+      "Skill(plan-ceo-review:*)",
+      "WebSearch",
+      "Skill(plan-eng-review)",
+      "Skill(plan-eng-review:*)",
+      "Bash(ls jest.config.* vitest.config.* playwright.config.* cypress.config.* .rspec pytest.ini)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''''scripts:'''', list\\(d.get\\(''''scripts'''',{}\\).keys\\(\\)\\)\\); print\\(''''devDeps:'''', list\\(d.get\\(''''devDependencies'''',{}\\).keys\\(\\)\\)\\)\")",
+      "Bash(~/.claude/skills/gstack/bin/gstack-review-read)"
     ]
   }
 }
