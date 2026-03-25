@@ -1,13 +1,27 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Instrument_Sans, EB_Garamond } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+// UI font — all interface labels, body text, navigation, buttons
+const instrumentSans = Instrument_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-instrument-sans",
+  display: "swap",
 });
+
+// Wordmark only — used exclusively for the "Markman" logo in nav
+const ebGaramond = EB_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-eb-garamond",
+  display: "swap",
+});
+
+// Data / tables — dates, numeric values, serial numbers needing alignment
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
@@ -25,16 +39,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={cn(
-          geistSans.variable,
-          geistMono.variable,
-          "antialiased font-sans"
-        )}
-      >
-        {children}
-      </body>
+    <html
+      lang="en"
+      className={cn(
+        instrumentSans.variable,
+        ebGaramond.variable,
+        geistMono.variable,
+      )}
+    >
+      <body className="antialiased font-sans">{children}</body>
     </html>
   );
 }
