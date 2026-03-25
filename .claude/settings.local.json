@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp -Rf ~/.claude/skills/gstack /Users/rodrigocasanovaaleman/Desktop/Markman/.claude/skills/gstack)",
+      "Bash(rm -rf /Users/rodrigocasanovaaleman/Desktop/Markman/.claude/skills/gstack/.git)",
+      "Bash(mkdir -p /Users/rodrigocasanovaaleman/Desktop/Markman/.claude/skills)",
+      "Bash(./setup)",
+      "Bash(npx create-next-app@14 . --typescript --eslint --tailwind --app --no-src-dir --no-turbopack --import-alias \"@/*\" --yes)",
+      "Bash(npx create-next-app@14 . --typescript --eslint --tailwind --app --no-src-dir --no-turbopack --import-alias \"@/*\")",
+      "Bash(npx create-next-app@14 markman-tmp --typescript --eslint --tailwind --app --no-src-dir --no-turbopack --import-alias \"@/*\" --yes)",
+      "Bash(npm install:*)",
+      "Bash(npx shadcn@4.0.8 init --defaults)"
+    ]
+  }
+}
