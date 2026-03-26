@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     token: invite.token,
   }).catch(() => {}); // Email failure logged but doesn't fail the request
 
-  // Log notification
+  // Log notification (ignore dedup conflicts — same attorney may invite multiple clients/day)
   await admin
     .from("notifications")
     .insert({
@@ -70,7 +70,8 @@ export async function POST(request: Request) {
       event_type: "invite",
       serial_number: null,
     })
-    .throwOnError();
+    .then(() => {})
+    .catch(() => {});
 
   return NextResponse.json({ ok: true, token: invite.token }, { status: 201 });
 }
