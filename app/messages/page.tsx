@@ -31,13 +31,15 @@ export default async function MessagesPage() {
   }
 
   const { data: partnerRelations } = await partnersQuery;
-  const partners = (partnerRelations ?? []).map(
-    (r) => (profile?.role === "attorney" ? r.users : r.users) as unknown as {
-      id: string;
-      display_name: string | null;
-      email: string;
-    }
-  );
+  const partners = (partnerRelations ?? [])
+    .map(
+      (r) => r.users as unknown as {
+        id: string;
+        display_name: string | null;
+        email: string;
+      } | null
+    )
+    .filter((u): u is { id: string; display_name: string | null; email: string } => u !== null);
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
