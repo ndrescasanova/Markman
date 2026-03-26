@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { computeBrandHealthScore, type TrademarkStatus } from "@/lib/brand-health/score";
+import { AppShell } from "@/components/markman/AppShell";
 import InviteClientButton from "@/components/markman/InviteClientButton";
 import Link from "next/link";
 
@@ -32,7 +33,7 @@ export default async function AttorneyDashboard() {
   );
   const clientIds = clients.map((c) => c.id);
 
-  // Batch-fetch all trademarks (no N+1 — MEDIUM-2)
+  // Batch-fetch all trademarks
   const { data: allTrademarks } = clientIds.length
     ? await supabase
         .from("trademarks")
@@ -40,7 +41,7 @@ export default async function AttorneyDashboard() {
         .in("user_id", clientIds)
     : { data: [] };
 
-  // Batch-fetch most recent score per client (no N+1)
+  // Batch-fetch most recent score per client
   const { data: latestScores } = clientIds.length
     ? await supabase
         .from("score_history")
@@ -49,9 +50,11 @@ export default async function AttorneyDashboard() {
         .order("computed_at", { ascending: false })
     : { data: [] };
 
-  type TmRow = { user_id: string; id: string; mark_name: string; serial_number: string; status: TrademarkStatus; expiration_date: string | null };
+  type TmRow = {
+    user_id: string; id: string; mark_name: string;
+    serial_number: string; status: TrademarkStatus; expiration_date: string | null;
+  };
 
-  // Build client summaries
   const today = new Date();
   const tmsByClient = new Map<string, TmRow[]>();
   for (const tm of allTrademarks ?? []) {
@@ -59,7 +62,6 @@ export default async function AttorneyDashboard() {
     tmsByClient.get(tm.user_id)!.push(tm as TmRow);
   }
 
-  // Get most recent score per client (scores are ordered desc already)
   const scoreByClient = new Map<string, number | null>();
   for (const s of latestScores ?? []) {
     if (!scoreByClient.has(s.user_id)) scoreByClient.set(s.user_id, s.score);
@@ -85,18 +87,17 @@ export default async function AttorneyDashboard() {
     const urgency: "critical" | "warning" | "ok" =
       urgentCount > 0 || (score !== null && score < 50)
         ? "critical"
-        : (score !== null && score < 70)
+        : score !== null && score < 70
         ? "warning"
         : "ok";
 
     return { ...client, tms, score, urgentCount, urgency };
   });
 
-  // Summary stats
   const totalMarks = (allTrademarks ?? []).length;
   const urgentTotal = clientSummaries.filter((c) => c.urgency === "critical").length;
 
-  // All upcoming deadlines across all clients
+  // All upcoming deadlines across all clients (next 90 days)
   const allDeadlines = (allTrademarks ?? [])
     .filter((t) => t.expiration_date)
     .map((t) => {
@@ -110,66 +111,86 @@ export default async function AttorneyDashboard() {
     .sort((a, b) => a.daysLeft - b.daysLeft)
     .slice(0, 10);
 
-  return (
-    <div className="min-h-screen bg-[#FAFAFA]">
-      {/* Nav */}
-      <nav className="bg-white border-b border-[#E5E7EB] px-6 py-4 flex items-center justify-between">
-        <span className="font-serif text-xl text-[#0A1628]">Markman</span>
-        <div className="flex items-center gap-4">
-          <Link href="/messages" className="text-sm text-[#6B7280] hover:text-[#0A1628]">
-            Messages
-          </Link>
-          <Link
-            href="/attorney/import"
-            className="px-3 py-1.5 text-sm bg-[#2563EB] text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Bulk import
-          </Link>
-        </div>
-      </nav>
+  const userDisplay = profile?.display_name || profile?.email || "";
 
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">
-        {/* Stat cards */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+  return (
+    <AppShell
+      role="attorney"
+      userDisplay={userDisplay}
+      sidebarAction={<InviteClientButton />}
+    >
+      <div className="px-8 py-8 space-y-6 max-w-[960px]">
+
+        {/* ── Stat Cards ── */}
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: "Clients", value: clients.length, color: "text-[#0A1628]" },
+            {
+              label: "Clients",
+              value: clients.length,
+              bg: "bg-white",
+              valueColor: "text-[#0A1628]",
+            },
             {
               label: "Urgent",
               value: urgentTotal,
-              color: urgentTotal > 0 ? "text-[#DC2626]" : "text-[#16A34A]",
+              bg: urgentTotal > 0 ? "bg-[#FEF2F2]" : "bg-white",
+              valueColor: urgentTotal > 0 ? "text-[#DC2626]" : "text-[#0A1628]",
             },
-            { label: "Total Marks", value: totalMarks, color: "text-[#0A1628]" },
-            { label: "Conflicts", value: 0, color: "text-[#9CA3AF]" },
-          ].map(({ label, value, color }) => (
+            {
+              label: "Total Marks",
+              value: totalMarks,
+              bg: "bg-white",
+              valueColor: "text-[#0A1628]",
+            },
+            {
+              label: "Conflicts",
+              value: 0,
+              bg: "bg-white",
+              valueColor: "text-[#9CA3AF]",
+            },
+          ].map(({ label, value, bg, valueColor }) => (
             <div
               key={label}
-              className="bg-white border border-[#E5E7EB] rounded-lg px-5 py-4"
+              className={`${bg} border border-[#E5E7EB] rounded-lg px-5 py-4`}
             >
-              <p className="text-xs text-[#6B7280] font-medium uppercase tracking-wide mb-1">
+              <p className="text-[11px] font-[500] tracking-[0.06em] uppercase text-[#6B7280] mb-2">
                 {label}
               </p>
-              <p className={`text-2xl font-mono font-medium ${color}`}>{value}</p>
+              <p className={`text-[28px] font-mono font-[400] leading-none ${valueColor}`}
+                 style={{ fontVariantNumeric: "tabular-nums" }}>
+                {value}
+              </p>
             </div>
           ))}
         </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Client list */}
-          <section className="md:col-span-2 bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* ── Client List ── */}
+          <section className="lg:col-span-2 bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-[#E5E7EB] flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-[#0A1628]">Clients</h2>
-              <InviteClientButton />
+              <h2 className="text-[14px] font-[600] text-[#0A1628]">Clients</h2>
+              <span className="text-[12px] text-[#9CA3AF]">
+                {clients.length} total
+              </span>
             </div>
 
             {clients.length === 0 ? (
-              <div className="px-6 py-12 text-center">
-                <p className="text-sm font-medium text-[#0A1628] mb-1">No clients yet</p>
-                <p className="text-xs text-[#9CA3AF] mb-4">
-                  Invite your first client to get started.
+              <div className="px-6 py-16 text-center space-y-3">
+                {/* Briefcase icon */}
+                <svg className="mx-auto" width="40" height="40" viewBox="0 0 24 24" fill="none"
+                  stroke="#9CA3AF" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" />
+                  <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
+                  <line x1="12" y1="12" x2="12" y2="12" />
+                  <path d="M2 12h20" />
+                </svg>
+                <p className="text-[14px] font-[600] text-[#0A1628]">No clients yet</p>
+                <p className="text-[13px] text-[#9CA3AF] max-w-xs mx-auto">
+                  Invite a founder to connect their trademark portfolio to your dashboard.
                 </p>
                 <Link
                   href="/attorney/import"
-                  className="text-sm text-[#2563EB] hover:underline"
+                  className="inline-block mt-1 text-[13px] text-[#2563EB] hover:underline"
                 >
                   Or use bulk import →
                 </Link>
@@ -179,87 +200,102 @@ export default async function AttorneyDashboard() {
                 {clientSummaries.map((client) => (
                   <li
                     key={client.id}
-                    className="px-6 py-4 flex items-center justify-between hover:bg-[#F9FAFB]"
+                    className="px-6 py-4 hover:bg-[#F9FAFB] transition-colors"
                   >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-[#0A1628]">
-                          {client.display_name || client.email}
-                        </span>
-                        {client.urgency === "critical" && (
-                          <span className="text-xs text-[#DC2626]">
-                            {client.urgentCount} renewal{client.urgentCount !== 1 ? "s" : ""} due
+                    <div className="flex items-center justify-between gap-4">
+                      {/* Client info */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[14px] font-[500] text-[#0A1628]">
+                            {client.display_name || client.email}
+                          </span>
+                          {client.urgency === "critical" && (
+                            <span className="text-[12px] text-[#DC2626] font-[500]">
+                              {client.urgentCount} renewal{client.urgentCount !== 1 ? "s" : ""} due
+                            </span>
+                          )}
+                          {client.urgency === "warning" && (
+                            <span className="text-[12px] text-[#D97706]">Score at risk</span>
+                          )}
+                        </div>
+                        <p className="text-[12px] text-[#9CA3AF] mt-0.5">
+                          {client.tms.length} trademark{client.tms.length !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+
+                      {/* Score + view */}
+                      <div className="flex items-center gap-4 shrink-0">
+                        {client.score !== null && (
+                          <span
+                            className="font-mono text-[14px]"
+                            style={{
+                              color:
+                                client.score >= 60
+                                  ? "#16A34A"
+                                  : client.score >= 40
+                                  ? "#D97706"
+                                  : "#DC2626",
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            {client.score}
                           </span>
                         )}
-                        {client.urgency === "warning" && (
-                          <span className="text-xs text-[#D97706]">Score at risk</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-[#9CA3AF] mt-0.5">
-                        {client.tms.length} trademark{client.tms.length !== 1 ? "s" : ""}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {client.score !== null && (
-                        <span
-                          className={`font-mono text-sm ${
-                            client.score >= 60
-                              ? "text-[#16A34A]"
-                              : client.score >= 40
-                              ? "text-[#D97706]"
-                              : "text-[#DC2626]"
-                          }`}
+                        <Link
+                          href={`/attorney/client/${client.id}`}
+                          className="text-[13px] text-[#2563EB] hover:underline font-[500]"
                         >
-                          {client.score}
-                        </span>
-                      )}
-                      <Link
-                        href={`/attorney/client/${client.id}`}
-                        className="text-xs text-[#2563EB] hover:underline"
-                      >
-                        View →
-                      </Link>
+                          View →
+                        </Link>
+                      </div>
                     </div>
                   </li>
                 ))}
               </ul>
             )}
-            {/* Free plan footer */}
-            <div className="px-6 py-3 border-t border-[#F3F4F6] bg-[#F9FAFB]">
-              <p className="text-xs text-[#9CA3AF]">
-                Free plan · {clients.length} client{clients.length !== 1 ? "s" : ""} — no limit
-              </p>
-            </div>
+
+            {clients.length > 0 && (
+              <div className="px-6 py-3 border-t border-[#F3F4F6] bg-[#F9FAFB]">
+                <p className="text-[11px] text-[#9CA3AF]">
+                  Free plan · {clients.length} client{clients.length !== 1 ? "s" : ""} — no limit
+                </p>
+              </div>
+            )}
           </section>
 
-          {/* Weekly deadline view */}
+          {/* ── Upcoming Renewals ── */}
           <section className="bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
-            <div className="px-4 py-4 border-b border-[#E5E7EB]">
-              <h2 className="text-sm font-semibold text-[#0A1628]">Upcoming Renewals</h2>
-              <p className="text-xs text-[#9CA3AF] mt-0.5">All clients · next 90 days</p>
+            <div className="px-5 py-4 border-b border-[#E5E7EB]">
+              <h2 className="text-[14px] font-[600] text-[#0A1628]">Upcoming Renewals</h2>
+              <p className="text-[12px] text-[#9CA3AF] mt-0.5">All clients · next 90 days</p>
             </div>
 
             {allDeadlines.length === 0 ? (
-              <div className="px-4 py-8 text-center">
-                <p className="text-xs text-[#9CA3AF]">No renewals due in the next 90 days</p>
+              <div className="px-5 py-10 text-center">
+                <p className="text-[13px] text-[#9CA3AF]">No renewals due in the next 90 days</p>
               </div>
             ) : (
               <ul className="divide-y divide-[#F3F4F6]">
                 {allDeadlines.map((tm) => (
-                  <li key={tm.id} className="px-4 py-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-medium text-[#0A1628]">{tm.mark_name}</p>
-                        <p className="text-xs text-[#9CA3AF]">{tm.clientName}</p>
+                  <li key={tm.id} className="px-5 py-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-[500] text-[#0A1628] truncate">
+                          {tm.mark_name}
+                        </p>
+                        <p className="text-[11px] text-[#9CA3AF] truncate">{tm.clientName}</p>
                       </div>
                       <span
-                        className={`text-xs font-mono ${
-                          tm.daysLeft < 30
-                            ? "text-[#DC2626]"
-                            : tm.daysLeft < 60
-                            ? "text-[#D97706]"
-                            : "text-[#16A34A]"
-                        }`}
+                        className="text-[12px] font-mono shrink-0"
+                        style={{
+                          color:
+                            tm.daysLeft < 30
+                              ? "#DC2626"
+                              : tm.daysLeft < 60
+                              ? "#D97706"
+                              : "#16A34A",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
                       >
                         {tm.daysLeft}d
                       </span>
@@ -270,7 +306,7 @@ export default async function AttorneyDashboard() {
             )}
           </section>
         </div>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }

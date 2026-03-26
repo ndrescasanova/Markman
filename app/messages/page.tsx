@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
+import { AppShell } from "@/components/markman/AppShell";
+import InviteClientButton from "@/components/markman/InviteClientButton";
 import MessagesClient from "./MessagesClient";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +19,6 @@ export default async function MessagesPage() {
     .eq("id", user.id)
     .single();
 
-  // Step 1: get partner IDs from attorney_clients (RLS allows: attorney_id = uid OR client_id = uid)
   const { data: acRows } = await supabase
     .from("attorney_clients")
     .select("attorney_id, client_id")
@@ -27,7 +28,6 @@ export default async function MessagesPage() {
     r.attorney_id === user.id ? r.client_id : r.attorney_id
   );
 
-  // Step 2: fetch partner profiles using admin client (bypasses RLS — server-only)
   const admin = createAdminClient();
   const { data: partnerUsers } = partnerIds.length
     ? await admin
@@ -42,20 +42,35 @@ export default async function MessagesPage() {
     email: string;
   }[];
 
+  const role = profile?.role === "attorney" ? "attorney" : "founder";
+  const userDisplay = profile?.display_name || profile?.email || "";
+
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
-      <nav className="bg-white border-b border-[#E5E7EB] px-6 py-4">
-        <span className="font-serif text-xl text-[#0A1628]">Markman</span>
-      </nav>
-      <main className="max-w-4xl mx-auto px-6 py-8">
-        <MessagesClient
-          currentUser={{ id: user.id, displayName: profile?.display_name || profile?.email || "" }}
-          partners={partners.map((p) => ({
-            id: p.id,
-            displayName: p.display_name || p.email,
-          }))}
-        />
-      </main>
-    </div>
+    <AppShell
+      role={role}
+      userDisplay={userDisplay}
+      sidebarAction={role === "attorney" ? <InviteClientButton /> : undefined}
+    >
+      <div className="h-full flex flex-col">
+        {/* Page header */}
+        <div className="px-8 py-6 border-b border-[#E5E7EB]">
+          <h1 className="text-[20px] font-[600] text-[#0A1628] tracking-tight">Messages</h1>
+        </div>
+
+        {/* Messages content */}
+        <div className="flex-1 px-8 py-6 overflow-hidden">
+          <MessagesClient
+            currentUser={{
+              id: user.id,
+              displayName: profile?.display_name || profile?.email || "",
+            }}
+            partners={partners.map((p) => ({
+              id: p.id,
+              displayName: p.display_name || p.email,
+            }))}
+          />
+        </div>
+      </div>
+    </AppShell>
   );
 }

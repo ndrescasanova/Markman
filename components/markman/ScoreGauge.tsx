@@ -1,73 +1,101 @@
 "use client";
 
-import { scoreLabel, scoreColor } from "@/lib/brand-health/score";
+import { scoreLabel } from "@/lib/brand-health/score";
 
 interface Props {
   score: number | null;
+  /** Compact mode — smaller SVG, used inline in strips */
+  compact?: boolean;
 }
 
 /**
- * Arc gauge widget — SVG semi-circle per DESIGN.md spec.
+ * Arc gauge — SVG semi-circle per DESIGN.md spec.
+ * Score number overlaid INSIDE the arc, 52px Instrument Sans 600.
  * Null score → "Add your first trademark to see your score"
+ *
+ * Color thresholds:
+ *   ≥80 → Success green  #16A34A
+ *   50–79 → Warning amber #D97706
+ *   <50  → Danger red    #DC2626
  */
-export function ScoreGauge({ score }: Props) {
+export function ScoreGauge({ score, compact = false }: Props) {
+  // Empty state
   if (score === null) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-center">
-        <div className="w-32 h-16 rounded-t-full border-4 border-[#E5E7EB] border-b-0 mb-4" />
-        <p className="text-sm text-[#6B7280]">Add your first trademark to see your score</p>
+      <div className="flex flex-col items-center justify-center py-6 text-center gap-3">
+        <svg width="180" height="90" viewBox="0 0 180 90" fill="none">
+          <path
+            d="M 10 90 A 80 80 0 0 1 170 90"
+            stroke="#E5E7EB"
+            strokeWidth="10"
+            strokeLinecap="round"
+          />
+        </svg>
+        <p className="text-[13px] text-[#9CA3AF] -mt-4">
+          Add your first trademark to see your score
+        </p>
       </div>
     );
   }
 
   const label = scoreLabel(score);
-  const colorClass = scoreColor(score);
 
-  // SVG arc — semi-circle from left to right
-  // Score 0 = all gray, score 100 = full arc
-  const RADIUS = 80;
-  const STROKE = 12;
-  const viewSize = (RADIUS + STROKE) * 2;
-  const cx = viewSize / 2;
-  const cy = viewSize / 2;
-  const circumference = Math.PI * RADIUS; // semi-circle circumference
-  const fill = (score / 100) * circumference;
+  // Color by score (DESIGN.md thresholds)
+  const arcColor =
+    score >= 80 ? "#16A34A" :
+    score >= 50 ? "#D97706" :
+    "#DC2626";
+
+  const textColor =
+    score >= 80 ? "#16A34A" :
+    score >= 50 ? "#D97706" :
+    "#DC2626";
+
+  // SVG dimensions — per DESIGN.md: 200px wide, 110px height
+  const W = compact ? 160 : 200;
+  const H = compact ? 88 : 110;
+  const cx = W / 2;
+  const cy = H - 10; // arc baseline a bit above the SVG bottom
+  const R = cx - 12; // radius fits inside width with padding
+
+  const STROKE = compact ? 9 : 11;
+
+  // Circumference of a semi-circle
+  const circumference = Math.PI * R;
+  const fill = Math.min(1, Math.max(0, score / 100)) * circumference;
   const gap = circumference - fill;
 
-  // Arc color based on score
-  const arcColor =
-    score >= 60
-      ? "#16A34A"   // success green
-      : score >= 40
-      ? "#D97706"   // warning amber
-      : "#DC2626";  // danger red
+  // Arc path: left → top → right
+  const x0 = cx - R;
+  const x1 = cx + R;
+  const y = cy;
 
-  // Semi-circle path: start at left, end at right, going through top
-  const startX = cx - RADIUS;
-  const startY = cy;
-  const endX = cx + RADIUS;
-  const endY = cy;
+  // Score number: font size scales with compact mode
+  const scoreSize = compact ? 40 : 52;
+  // Position score visually centered inside arc — y above the baseline
+  const scoreY = cy - 6;
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative">
+    <div className="flex flex-col items-center select-none">
+      <div className="relative" style={{ width: W, height: H }}>
         <svg
-          width={viewSize}
-          height={cy + STROKE}
-          viewBox={`0 0 ${viewSize} ${cy + STROKE}`}
-          overflow="visible"
+          width={W}
+          height={H}
+          viewBox={`0 0 ${W} ${H}`}
+          aria-label={`Brand health score: ${score} out of 100`}
+          role="img"
         >
-          {/* Background track */}
+          {/* Track */}
           <path
-            d={`M ${startX} ${startY} A ${RADIUS} ${RADIUS} 0 0 1 ${endX} ${endY}`}
+            d={`M ${x0} ${y} A ${R} ${R} 0 0 1 ${x1} ${y}`}
             fill="none"
             stroke="#E5E7EB"
             strokeWidth={STROKE}
             strokeLinecap="round"
           />
-          {/* Score fill */}
+          {/* Fill */}
           <path
-            d={`M ${startX} ${startY} A ${RADIUS} ${RADIUS} 0 0 1 ${endX} ${endY}`}
+            d={`M ${x0} ${y} A ${R} ${R} 0 0 1 ${x1} ${y}`}
             fill="none"
             stroke={arcColor}
             strokeWidth={STROKE}
@@ -75,21 +103,34 @@ export function ScoreGauge({ score }: Props) {
             strokeDasharray={`${fill} ${gap}`}
             style={{ transition: "stroke-dasharray 0.6s ease-out" }}
           />
-        </svg>
-
-        {/* Score number centered below arc */}
-        <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center">
-          <span
-            className={`font-mono text-5xl font-normal leading-none ${colorClass}`}
-            style={{ fontFamily: "var(--font-geist-mono, 'Geist Mono')" }}
+          {/* Score number — inside arc */}
+          <text
+            x={cx}
+            y={scoreY}
+            textAnchor="middle"
+            dominantBaseline="auto"
+            fontSize={scoreSize}
+            fontWeight={600}
+            letterSpacing="-0.04em"
+            fill={textColor}
+            fontFamily="var(--font-instrument-sans, 'Instrument Sans'), -apple-system, sans-serif"
           >
             {score}
-          </span>
-        </div>
+          </text>
+        </svg>
       </div>
 
-      <div className="mt-3 text-center">
-        <span className={`text-sm font-medium ${colorClass}`}>{label}</span>
+      {/* Label below gauge */}
+      <div className="mt-1 text-center">
+        <p className="text-[13px] text-[#6B7280] font-[500]">
+          Brand Health Score
+        </p>
+        <p
+          className="text-[13px] font-[500] mt-0.5"
+          style={{ color: textColor }}
+        >
+          {label}
+        </p>
       </div>
     </div>
   );

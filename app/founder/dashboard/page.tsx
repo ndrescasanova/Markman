@@ -4,6 +4,7 @@ import { computeBrandHealthScore } from "@/lib/brand-health/score";
 import { ScoreGauge } from "@/components/markman/ScoreGauge";
 import { StatusBadge } from "@/components/markman/StatusBadge";
 import { AddTrademarkForm } from "@/components/markman/AddTrademarkForm";
+import { AppShell } from "@/components/markman/AppShell";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -51,180 +52,259 @@ export default async function FounderDashboard() {
     .sort((a, b) => a.daysLeft - b.daysLeft);
 
   const attorneyInfo = (attorney?.users as unknown as { display_name: string | null; email: string } | null);
+  const userDisplay = profile?.display_name || profile?.email || "";
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
-      {/* Nav */}
-      <nav className="bg-white border-b border-[#E5E7EB] px-6 py-4 flex items-center justify-between">
-        <span className="font-serif text-xl text-[#0A1628]">Markman</span>
-        <div className="flex items-center gap-4">
-          <Link href="/messages" className="text-sm text-[#6B7280] hover:text-[#0A1628]">
-            Messages
-          </Link>
-          <span className="text-sm text-[#9CA3AF]">
-            {profile?.display_name || profile?.email}
-          </span>
-        </div>
-      </nav>
+    <AppShell role="founder" userDisplay={userDisplay}>
+      <div className="px-8 py-8 space-y-6 max-w-[960px]">
 
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">
-        {/* Score Hero Strip */}
-        <section className="bg-white border border-[#E5E7EB] rounded-lg p-6 flex flex-col items-center">
-          <ScoreGauge score={score} />
-          {score !== null && (
-            <p className="mt-2 text-xs text-[#9CA3AF]">
-              Based on {tms.length} trademark{tms.length !== 1 ? "s" : ""} in your portfolio
-            </p>
-          )}
-          {/* TODO-004: legal framing — "not legal advice" */}
-          <p className="mt-1 text-xs text-[#9CA3AF]">
-            This score reflects renewal status and registration data. Not legal advice.
-          </p>
-        </section>
-
-        {/* Two-column: Marks Table + Renewal Timeline */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Registered Marks Table */}
-          <section className="md:col-span-2 bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-[#E5E7EB] flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-[#0A1628]">Your Trademarks</h2>
-              <span className="text-xs text-[#9CA3AF]">{tms.length} total</span>
+        {/* ── Brand Health Strip ── */}
+        <section className="bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
+          <div className="flex items-center gap-8 px-8 py-6">
+            {/* Arc gauge */}
+            <div className="shrink-0">
+              <ScoreGauge score={score} />
             </div>
 
-            {tms.length === 0 ? (
-              <div className="px-6 py-12 text-center">
-                <p className="text-sm font-medium text-[#0A1628] mb-1">
-                  No trademarks yet
-                </p>
-                <p className="text-xs text-[#9CA3AF] mb-6">
-                  Add a trademark by entering its USPTO serial number below.
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
-                      <th className="px-4 py-2.5 text-left text-xs font-medium text-[#6B7280] uppercase tracking-wide">
-                        Mark
-                      </th>
-                      <th className="px-4 py-2.5 text-left text-xs font-medium text-[#6B7280] uppercase tracking-wide">
-                        Serial #
-                      </th>
-                      <th className="px-4 py-2.5 text-left text-xs font-medium text-[#6B7280] uppercase tracking-wide">
-                        Status
-                      </th>
-                      <th className="px-4 py-2.5 text-left text-xs font-medium text-[#6B7280] uppercase tracking-wide">
-                        Expiry
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#F3F4F6]">
-                    {tms.map((tm) => (
-                      <tr key={tm.id} className="hover:bg-[#F9FAFB]">
-                        <td className="px-4 py-3 text-[#0A1628] font-medium">{tm.mark_name}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-[#6B7280]">
-                          {tm.serial_number}
-                        </td>
-                        <td className="px-4 py-3">
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              {score !== null ? (
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-[11px] font-[500] tracking-[0.08em] uppercase text-[#8C7355]">
+                      Portfolio Summary
+                    </p>
+                    <p className="text-[15px] text-[#6B7280] mt-1">
+                      {tms.length} trademark{tms.length !== 1 ? "s" : ""} tracked
+                      {urgentMarks.length > 0 && (
+                        <span className="text-[#D97706]">
+                          {" "}· {urgentMarks.length} renewal{urgentMarks.length !== 1 ? "s" : ""} due soon
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <p className="text-[12px] text-[#9CA3AF] leading-relaxed max-w-sm">
+                    This score reflects renewal status and registration data.
+                    It is not a legal opinion.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-[15px] font-[600] text-[#0A1628]">
+                    Add your first trademark
+                  </p>
+                  <p className="text-[14px] text-[#6B7280]">
+                    Enter your USPTO serial number below to start tracking renewals
+                    and get your brand health score.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* PDF Export — locked if no subscription */}
+            <div className="shrink-0 hidden md:block">
+              <a
+                href="/api/portfolio/export"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-md hover:bg-[#F9FAFB] transition-colors no-underline"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 2v8M5 7l3 3 3-3M2 11v1a2 2 0 002 2h8a2 2 0 002-2v-1" />
+                </svg>
+                Export PDF
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Trademarks Table ── */}
+        <section className="bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#E5E7EB] flex items-center justify-between">
+            <h2 className="text-[14px] font-[600] text-[#0A1628]">
+              Trademarks
+            </h2>
+            <span className="text-[12px] text-[#9CA3AF]">{tms.length} total</span>
+          </div>
+
+          {tms.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
+                    <th className="px-5 py-3 text-left text-[11px] font-[600] text-[#6B7280] uppercase tracking-[0.06em]">
+                      Status
+                    </th>
+                    <th className="px-5 py-3 text-left text-[11px] font-[600] text-[#6B7280] uppercase tracking-[0.06em]">
+                      Mark
+                    </th>
+                    <th className="px-5 py-3 text-left text-[11px] font-[600] text-[#6B7280] uppercase tracking-[0.06em]">
+                      Serial #
+                    </th>
+                    <th className="px-5 py-3 text-left text-[11px] font-[600] text-[#6B7280] uppercase tracking-[0.06em]">
+                      Renewal
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tms.map((tm) => {
+                    const daysLeft = tm.expiration_date
+                      ? Math.floor(
+                          (new Date(tm.expiration_date).getTime() - today.getTime()) /
+                          (1000 * 60 * 60 * 24)
+                        )
+                      : null;
+                    const isUrgent = daysLeft !== null && daysLeft < 30;
+                    const isWarning = daysLeft !== null && daysLeft >= 30 && daysLeft < 90;
+
+                    return (
+                      <tr
+                        key={tm.id}
+                        className="border-b border-[#F3F4F6] last:border-0 hover:bg-[#F9FAFB] transition-colors"
+                      >
+                        <td className="px-5 py-3.5">
                           <StatusBadge status={tm.status} />
                           {tm.sync_status === "error" && (
-                            <span className="ml-1 text-xs text-[#D97706]" title={tm.sync_error ?? ""}>
+                            <span className="ml-1.5 text-[11px] text-[#D97706]" title={tm.sync_error ?? ""}>
                               ⚠
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-3 font-mono text-xs text-[#6B7280]">
-                          {tm.expiration_date ?? "—"}
+                        <td className="px-5 py-3.5 text-[14px] font-[500] text-[#0A1628]">
+                          {tm.mark_name}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          {/* Chip style per DESIGN.md */}
+                          <span className="inline-flex items-center px-2 py-0.5 bg-[#FAFAFA] border border-[#E5E7EB] rounded text-[11px] text-[#9CA3AF]"
+                            style={{ fontVariantNumeric: "tabular-nums" }}>
+                            {tm.serial_number}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          {tm.expiration_date ? (
+                            <span
+                              className={`text-[13px] font-mono ${
+                                isUrgent
+                                  ? "text-[#DC2626]"
+                                  : isWarning
+                                  ? "text-[#D97706]"
+                                  : "text-[#6B7280]"
+                              }`}
+                            >
+                              {tm.expiration_date}
+                              {daysLeft !== null && daysLeft < 90 && (
+                                <span className="ml-1.5 text-[11px]">
+                                  ({daysLeft < 0 ? "expired" : `${daysLeft}d`})
+                                </span>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="text-[13px] text-[#9CA3AF]">—</span>
+                          )}
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* Add trademark form */}
-            <div className="px-6 py-4 border-t border-[#E5E7EB]">
-              <AddTrademarkForm />
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          </section>
+          )}
 
-          {/* Renewal Timeline */}
+          {/* Add trademark form */}
+          <div className={`px-6 py-4 ${tms.length > 0 ? "border-t border-[#F3F4F6]" : ""}`}>
+            {tms.length === 0 && (
+              <p className="text-[13px] text-[#9CA3AF] mb-3">
+                No trademarks yet. Enter your USPTO serial number to get started.
+              </p>
+            )}
+            <AddTrademarkForm />
+          </div>
+        </section>
+
+        {/* ── Renewal Timeline ── */}
+        {urgentMarks.length > 0 && (
           <section className="bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
-            <div className="px-4 py-4 border-b border-[#E5E7EB]">
-              <h2 className="text-sm font-semibold text-[#0A1628]">Renewal Timeline</h2>
-              <p className="text-xs text-[#9CA3AF] mt-0.5">Next 90 days</p>
+            <div className="px-6 py-4 border-b border-[#E5E7EB]">
+              <h2 className="text-[14px] font-[600] text-[#0A1628]">Upcoming Renewals</h2>
+              <p className="text-[12px] text-[#9CA3AF] mt-0.5">Next 90 days · sorted by urgency</p>
             </div>
-
-            {urgentMarks.length === 0 ? (
-              <div className="px-4 py-8 text-center">
-                <p className="text-xs text-[#9CA3AF]">
-                  {tms.length === 0
-                    ? "Add trademarks to track renewal deadlines"
-                    : "No renewals due in the next 90 days"}
-                </p>
-              </div>
-            ) : (
-              <ul className="divide-y divide-[#F3F4F6]">
-                {urgentMarks.map((tm) => {
-                  const urgencyColor =
-                    tm.daysLeft < 30
-                      ? "text-[#DC2626]"
-                      : tm.daysLeft < 60
-                      ? "text-[#D97706]"
-                      : "text-[#16A34A]";
-                  return (
-                    <li key={tm.id} className="px-4 py-3">
-                      <p className="text-xs font-medium text-[#0A1628]">{tm.mark_name}</p>
-                      <p className={`text-xs mt-0.5 ${urgencyColor}`}>
-                        {tm.daysLeft < 0
-                          ? "Expired"
-                          : tm.daysLeft === 0
-                          ? "Expires today"
-                          : `${tm.daysLeft} days left`}
-                      </p>
-                      <p className="text-xs text-[#9CA3AF] font-mono">{tm.expiration_date}</p>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+            <ul className="divide-y divide-[#F3F4F6]">
+              {urgentMarks.map((tm) => {
+                const isUrgent = tm.daysLeft < 30;
+                const urgencyColor = isUrgent ? "text-[#DC2626]" : "text-[#D97706]";
+                return (
+                  <li key={tm.id} className="px-6 py-4">
+                    {/* Renewal assistant panel per DESIGN.md */}
+                    <div
+                      className={`rounded-md border px-4 py-3 ${
+                        isUrgent
+                          ? "bg-[#FEF2F2] border-[#FECACA]"
+                          : "bg-[#FFFBEB] border-[#FDE68A]"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className={`text-[13px] font-[600] ${urgencyColor}`}>
+                            {isUrgent ? "⚠ " : ""}
+                            {tm.daysLeft < 0
+                              ? `${tm.mark_name} — EXPIRED`
+                              : tm.daysLeft === 0
+                              ? `${tm.mark_name} — expires today`
+                              : `${tm.mark_name} — due in ${tm.daysLeft} days`}
+                          </p>
+                          <p className="text-[12px] text-[#6B7280] mt-1">
+                            Your trademark needs to be renewed to stay active.
+                            File your §8 Declaration with the USPTO by{" "}
+                            <span className="font-mono">{tm.expiration_date}</span>.
+                          </p>
+                        </div>
+                        <a
+                          href="https://www.uspto.gov/trademarks/maintain/after-registration"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 text-[12px] text-[#2563EB] hover:underline whitespace-nowrap"
+                        >
+                          Learn more ↗
+                        </a>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
           </section>
-        </div>
+        )}
 
-        {/* Attorney Contact Strip */}
+        {/* ── Attorney Strip ── */}
         {attorneyInfo && (
           <section className="bg-white border border-[#E5E7EB] rounded-lg px-6 py-4 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-[#0A1628]">Your Attorney</p>
-              <p className="text-xs text-[#6B7280]">
+              <p className="text-[11px] font-[500] tracking-[0.06em] uppercase text-[#8C7355] mb-1">
+                Your Attorney
+              </p>
+              <p className="text-[14px] font-[500] text-[#0A1628]">
                 {attorneyInfo.display_name || attorneyInfo.email}
               </p>
             </div>
             <Link
               href="/messages"
-              className="px-3 py-1.5 text-sm text-[#2563EB] border border-[#2563EB] rounded-md hover:bg-[#EFF6FF] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-[500] text-[#2563EB] border border-[#2563EB] rounded-md hover:bg-[#EFF6FF] transition-colors no-underline"
             >
-              Send message
+              Message
             </Link>
           </section>
         )}
 
-        {/* Phase 2 locked card */}
-        <section className="bg-white border border-[#E5E7EB] rounded-lg px-6 py-5 opacity-60">
-          <div className="flex items-center gap-2 mb-2">
-            <h2 className="text-sm font-semibold text-[#0A1628]">Conflict Monitoring</h2>
-            <span className="px-1.5 py-0.5 text-[10px] font-medium bg-[#F3F4F6] text-[#6B7280] rounded uppercase tracking-wide">
-              Coming soon
-            </span>
-          </div>
-          <p className="text-xs text-[#9CA3AF]">
-            AI-powered conflict detection will alert you when new trademark filings
-            could infringe on your brand. Launching in Phase 2.
+        {/* ── Phase 2 locked card ── */}
+        <section
+          className="border border-dashed border-[#E5E7EB] rounded-lg px-6 py-5"
+          style={{ background: "#FAFAFA" }}
+        >
+          <p className="text-[14px] font-[600] text-[#9CA3AF]">Conflict Monitoring</p>
+          <p className="text-[13px] text-[#9CA3AF] mt-1">
+            Available soon — AI-powered conflict detection coming in Phase 2.
           </p>
         </section>
-      </main>
-    </div>
+
+      </div>
+    </AppShell>
   );
 }
