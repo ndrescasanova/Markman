@@ -14,16 +14,21 @@ export default function UpgradeClient({ isSubscribed }: Props) {
     setLoading(true);
     setError(null);
 
-    const res = await fetch("/api/upgrade/checkout", { method: "POST" });
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/upgrade/checkout", { method: "POST" });
+      const data = await res.json();
 
-    if (!res.ok) {
-      setError(data.error || "Something went wrong. Please try again.");
+      if (!res.ok) {
+        setError(data.error || "Something went wrong. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      window.location.href = data.url;
+    } catch {
+      setError("Something went wrong. Please try again.");
       setLoading(false);
-      return;
     }
-
-    window.location.href = data.url;
   }
 
   if (isSubscribed) {
