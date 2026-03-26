@@ -90,7 +90,6 @@ export function ScoreGauge({ score }: Props) {
 
       <div className="mt-3 text-center">
         <span className={`text-sm font-medium ${colorClass}`}>{label}</span>
-        <p className="text-xs text-[#9CA3AF] mt-0.5">out of 80 — Phase 1</p>
       </div>
     </div>
   );
