@@ -4,7 +4,9 @@
  *
  * F-20: Must use runtime='nodejs' (not edge) — @react-pdf/renderer requires Node.js.
  * F-20: Use renderToStream() not renderToBuffer() to avoid memory pressure.
- * F-20: Font path resolved via process.cwd() — not relative URL — for Vercel compatibility.
+ * F-20: Uses PDF-native fonts (Helvetica/Courier) — no font files needed on Vercel.
+ *       Custom fonts (InstrumentSans/GeistMono) require font files in public/fonts/;
+ *       add them later for brand alignment (TODO-003 HTML templates task).
  * F-20: Set maxDuration=60 in route segment config for large portfolios.
  */
 
@@ -14,7 +16,6 @@ export const maxDuration = 60;
 import { createClient } from "@/lib/supabase/server";
 import { computeBrandHealthScore, scoreLabel } from "@/lib/brand-health/score";
 import { NextResponse } from "next/server";
-import path from "path";
 import React from "react";
 import {
   Document,
@@ -22,29 +23,15 @@ import {
   Text,
   View,
   StyleSheet,
-  Font,
   renderToStream,
 } from "@react-pdf/renderer";
 
-// F-20: Font path must use process.cwd() for Vercel compatibility
-const FONTS_DIR = path.join(process.cwd(), "public", "fonts");
-
-Font.register({
-  family: "InstrumentSans",
-  fonts: [
-    { src: path.join(FONTS_DIR, "InstrumentSans-Regular.ttf"), fontWeight: 400 },
-    { src: path.join(FONTS_DIR, "InstrumentSans-SemiBold.ttf"), fontWeight: 600 },
-  ],
-});
-
-Font.register({
-  family: "GeistMono",
-  src: path.join(FONTS_DIR, "GeistMonoVF.woff"),
-});
+// Using PDF-native fonts — always available on Vercel, no font files required.
+// Upgrade to InstrumentSans/GeistMono when font files are added to public/fonts/.
 
 const styles = StyleSheet.create({
   page: {
-    fontFamily: "InstrumentSans",
+    fontFamily: "Helvetica",
     fontSize: 10,
     padding: 48,
     color: "#0A1628",
@@ -63,7 +50,7 @@ const styles = StyleSheet.create({
   headerRight: { fontSize: 9, color: "#6B7280", textAlign: "right" },
   sectionTitle: { fontSize: 11, fontWeight: 600, marginBottom: 12, marginTop: 24 },
   scoreRow: { flexDirection: "row", alignItems: "baseline", marginBottom: 24 },
-  scoreNumber: { fontSize: 48, fontFamily: "GeistMono", fontWeight: 400, marginRight: 8 },
+  scoreNumber: { fontSize: 48, fontFamily: "Courier", fontWeight: 400, marginRight: 8 },
   scoreLabel: { fontSize: 12, color: "#6B7280" },
   table: { width: "100%" },
   tableHeader: {
@@ -87,9 +74,9 @@ const styles = StyleSheet.create({
     borderRightColor: "#E5E7EB",
   },
   colMark: { flex: 2 },
-  colSerial: { flex: 1, fontFamily: "GeistMono", fontSize: 9 },
+  colSerial: { flex: 1, fontFamily: "Courier", fontSize: 9 },
   colStatus: { flex: 1 },
-  colExpiry: { flex: 1, fontFamily: "GeistMono", fontSize: 9 },
+  colExpiry: { flex: 1, fontFamily: "Courier", fontSize: 9 },
   headerCell: { fontSize: 9, fontWeight: 600, color: "#6B7280", textTransform: "uppercase" },
   footer: {
     position: "absolute",
@@ -162,7 +149,7 @@ export async function GET() {
             View,
             { style: styles.scoreRow },
             React.createElement(Text, { style: styles.scoreNumber }, String(score)),
-            React.createElement(Text, { style: styles.scoreLabel }, `${label} — out of 80`)
+            React.createElement(Text, { style: styles.scoreLabel }, label ?? "")
           )
         : React.createElement(Text, { style: styles.scoreLabel }, "No trademarks yet"),
       // Marks table

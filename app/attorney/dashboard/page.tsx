@@ -203,9 +203,9 @@ export default async function AttorneyDashboard() {
                       {client.score !== null && (
                         <span
                           className={`font-mono text-sm ${
-                            client.score >= 70
+                            client.score >= 60
                               ? "text-[#16A34A]"
-                              : client.score >= 50
+                              : client.score >= 40
                               ? "text-[#D97706]"
                               : "text-[#DC2626]"
                           }`}

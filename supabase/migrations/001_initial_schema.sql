@@ -229,7 +229,7 @@ CREATE INDEX idx_subscriptions_stripe_sub ON public.subscriptions (stripe_subscr
 CREATE TABLE IF NOT EXISTS public.score_history (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  score       INTEGER NOT NULL CHECK (score >= 0 AND score <= 80),
+  score       INTEGER NOT NULL CHECK (score >= 0 AND score <= 100),
   computed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

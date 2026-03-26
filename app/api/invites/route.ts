@@ -63,15 +63,14 @@ export async function POST(request: Request) {
   }).catch(() => {}); // Email failure logged but doesn't fail the request
 
   // Log notification (ignore dedup conflicts — same attorney may invite multiple clients/day)
-  await admin
+  // Fire-and-forget: void prevents TypeScript PromiseLike chain errors
+  void admin
     .from("notifications")
     .insert({
       user_id: user.id,
       event_type: "invite",
       serial_number: null,
-    })
-    .then(() => {})
-    .catch(() => {});
+    });
 
   return NextResponse.json({ ok: true, token: invite.token }, { status: 201 });
 }
