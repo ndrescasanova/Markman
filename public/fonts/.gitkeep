@@ -1,0 +1,13 @@
+# Font files required for PDF export (app/api/portfolio/export/route.ts)
+#
+# Place these files here:
+#   EBGaramond-Regular.ttf
+#   EBGaramond-Italic.ttf
+#   InstrumentSans-Regular.ttf
+#   InstrumentSans-SemiBold.ttf
+#   GeistMono-Regular.ttf
+#
+# Download from:
+#   EB Garamond:       https://fonts.google.com/specimen/EB+Garamond
+#   Instrument Sans:   https://fonts.google.com/specimen/Instrument+Sans
+#   Geist Mono:        https://vercel.com/font

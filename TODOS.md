@@ -40,17 +40,21 @@ Update it in the daily cron job (after TSDR sync) and on any trademark write (cr
 
 ## TODO-003: Resend HTML email templates
 
-**What:** Design and implement branded HTML email templates for the two Phase 1 transactional emails: (1) invite email (attorney → client), (2) renewal alert (to founder, 30d and 7d before deadline).
+**What:** Design and implement branded HTML email templates for all Phase 1 transactional emails: (1) invite email (attorney → client), (2) renewal alert (30d and 7d before deadline), (3) milestone email (PENDING→REGISTERED congratulations), (4) message notification email (new unread message).
 
-**Why:** Plain-text Resend emails work for beta. Before public launch, branded templates meaningfully affect activation rate (invite email is the first impression for invited founders) and retention (renewal alert is the core value delivery mechanism).
+**Why:** Plain-text Resend emails work for beta. Before public launch, branded templates meaningfully affect activation rate (invite email is the first impression for invited founders) and retention (renewal alert is the core value delivery mechanism). Updated 2026-03-25: expanded from 2 to 4 templates to cover CEO expansion features (milestone + messaging).
 
-**Pros:** Invite email sets brand tone. Renewal alert with clear CTA (link to dashboard) improves click-through vs. plain text.
+**Pros:** Invite email sets brand tone. Renewal alert with clear CTA improves click-through. Milestone email is highly shareable ("my trademark just registered!") — a branded template maximizes social value. Message notification needs a CTA link to open the thread directly.
 
 **Cons:** Requires design system to be finalized first (colors, fonts, logo). HTML email testing across clients (Gmail, Outlook, Apple Mail) adds complexity.
 
-**Context:** The Resend client + send functions will exist in `lib/email/`. Templates should be React Email components (Resend's first-class format) or simple HTML strings. Test with Resend's preview feature before going live. Copy: invite template needs attorney name + CTA link; renewal alert needs trademark name + days remaining + dashboard link.
+**Context:** The Resend client + send functions will exist in `lib/email/`. Templates should be React Email components (Resend's first-class format) or simple HTML strings. Test with Resend's preview feature before going live. Per-template copy needs:
+- Invite: attorney name + CTA link
+- Renewal alert: trademark name + days remaining + dashboard link
+- Milestone: trademark name + registration number + congratulations copy (shareable)
+- Message notification: sender name + message preview (first 80 chars) + link to `/messages`
 
-**Depends on / blocked by:** Design system finalized. Not blocking Phase 1 beta (plain text is fine).
+**Depends on / blocked by:** Design system finalized (DONE — see DESIGN.md). Not blocking Phase 1 beta (plain text is fine).
 
 ---
 
@@ -121,3 +125,35 @@ Update it in the daily cron job (after TSDR sync) and on any trademark write (cr
 **Context:** Implementation: wrap TSDR fetch in a retry utility with jitter. For bulk import specifically: if TSDR fails mid-batch after some rows succeed, abort the TSDR loop and return partial preview with an error banner — do NOT commit partial data. The retry applies only to individual TSDR calls, not the DB transaction.
 
 **Depends on / blocked by:** Phase 1 TSDR integration. Address before first attorney uses bulk import in production.
+
+---
+
+## TODO-009: Renewal assistant dismiss persistence
+
+**What:** Persist the "dismiss" state of the renewal assistant panel so founders don't see the same panel on every page load. Currently spec'd as session-only (closes until page refresh). Proposed: `localStorage` keyed by `renewal-dismissed-{serial_number}`, storing the `expirationDate`. Auto-clears when the expiration date changes (new mark or renewal filed).
+
+**Why:** A founder with 3 marks all within 90 days sees 3 panels every single visit. Session-only means the panels return after every browser session, which becomes disruptive quickly. Persistent dismiss respects the founder's attention.
+
+**Pros:** No DB table needed (localStorage is sufficient). Auto-expiry logic is simple. Prevents dashboard clutter for active portfolio holders.
+
+**Cons:** Dismiss state is device-specific (clears on new browser or device). If the TSDR expiration date changes (renewal filed), the check must also check the stored date vs. current — adds a comparison step.
+
+**Context:** Implementation: `localStorage.setItem('renewal-dismissed-{serial}', expirationDate.toISOString())`. On render: if key exists AND stored date === current expirationDate, hide panel. If stored date !== current expirationDate (renewal filed, new deadline), remove key and show panel again.
+
+**Depends on / blocked by:** Renewal assistant panel built first (Phase 1). Not blocking Phase 1 beta (session-only is acceptable).
+
+---
+
+## TODO-010: Interaction state specs (loading / empty / error / hover)
+
+**What:** Before implementing any dashboard component, write explicit specs in DESIGN.md for every interaction state: (1) loading skeleton — shapes match real content, shimmer animation, (2) empty states — warmth + primary action + optional illustration, (3) error states — specific message + what to do next, (4) hover states — button hover, row hover, card hover. At minimum: mark table, score gauge, attorney client list, message thread.
+
+**Why:** The preview page shows the static "happy path" only. Without explicit state specs, engineers implement ad-hoc loading spinners, "No items found." empty states, and missing error messages. These gaps were flagged by the design review subagent and are the most common source of "feels unfinished" feedback at beta.
+
+**Pros:** Prevents ad-hoc state implementations. Empty states are features (warmth + action). Cheap to spec now, expensive to retrofit after each component is built.
+
+**Cons:** Adds a design step before implementation starts. Each state needs copywriting (loading labels, empty state messages, error messages).
+
+**Context:** Minimum viable specs for each state: loading = describe skeleton shapes (e.g., "mark table: 3 rows of 4 gray bars, shimmer left-to-right"), empty = describe message + CTA + any illustration/icon, error = describe message + retry CTA, hover = describe opacity or border change. Add as an "Interaction States" section in DESIGN.md. Use the table format from the plan-design-review skill.
+
+**Depends on / blocked by:** Design system finalized (DONE). Write specs BEFORE implementing the first dashboard component.

@@ -27,7 +27,22 @@
       "Skill(plan-eng-review:*)",
       "Bash(ls jest.config.* vitest.config.* playwright.config.* cypress.config.* .rspec pytest.ini)",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''''scripts:'''', list\\(d.get\\(''''scripts'''',{}\\).keys\\(\\)\\)\\); print\\(''''devDeps:'''', list\\(d.get\\(''''devDependencies'''',{}\\).keys\\(\\)\\)\\)\")",
-      "Bash(~/.claude/skills/gstack/bin/gstack-review-read)"
+      "Bash(~/.claude/skills/gstack/bin/gstack-review-read)",
+      "WebFetch(domain:www.harvey.ai)",
+      "WebFetch(domain:nemesisglobal.substack.com)",
+      "Skill(autoplan)",
+      "Skill(autoplan:*)",
+      "Bash(ls ~/.gstack/projects/ndrescasanova-Markman/*.md)",
+      "Bash(npm test:*)",
+      "Bash(/Users/rodrigocasanovaaleman/Desktop/Markman/public/fonts/.gitkeep:*)",
+      "Bash(node -e \"const p = require\\(''./package.json''\\); const deps = {...p.dependencies, ...p.devDependencies}; [''@react-pdf/renderer'',''stripe'',''openai'',''resend'',''uuid'',''@types/uuid''].forEach\\(pkg => console.log\\(pkg + '':'', deps[pkg] || ''MISSING''\\)\\)\")",
+      "Skill(browse)",
+      "Skill(browse:*)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(node -e \":*)",
+      "Bash(kill %1)",
+      "Skill(qa)",
+      "Skill(qa:*)"
     ]
   }
 }
