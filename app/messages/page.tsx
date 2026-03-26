@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import MessagesClient from "./MessagesClient";
 
@@ -16,30 +17,30 @@ export default async function MessagesPage() {
     .eq("id", user.id)
     .single();
 
-  // Fetch conversation partners
-  let partnersQuery;
-  if (profile?.role === "attorney") {
-    partnersQuery = supabase
-      .from("attorney_clients")
-      .select("users!attorney_clients_client_id_fkey(id, display_name, email)")
-      .eq("attorney_id", user.id);
-  } else {
-    partnersQuery = supabase
-      .from("attorney_clients")
-      .select("users!attorney_clients_attorney_id_fkey(id, display_name, email)")
-      .eq("client_id", user.id);
-  }
+  // Step 1: get partner IDs from attorney_clients (RLS allows: attorney_id = uid OR client_id = uid)
+  const { data: acRows } = await supabase
+    .from("attorney_clients")
+    .select("attorney_id, client_id")
+    .or(`attorney_id.eq.${user.id},client_id.eq.${user.id}`);
 
-  const { data: partnerRelations } = await partnersQuery;
-  const partners = (partnerRelations ?? [])
-    .map(
-      (r) => r.users as unknown as {
-        id: string;
-        display_name: string | null;
-        email: string;
-      } | null
-    )
-    .filter((u): u is { id: string; display_name: string | null; email: string } => u !== null);
+  const partnerIds = (acRows ?? []).map((r) =>
+    r.attorney_id === user.id ? r.client_id : r.attorney_id
+  );
+
+  // Step 2: fetch partner profiles using admin client (bypasses RLS — server-only)
+  const admin = createAdminClient();
+  const { data: partnerUsers } = partnerIds.length
+    ? await admin
+        .from("users")
+        .select("id, display_name, email")
+        .in("id", partnerIds)
+    : { data: [] };
+
+  const partners = (partnerUsers ?? []) as {
+    id: string;
+    display_name: string | null;
+    email: string;
+  }[];
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">

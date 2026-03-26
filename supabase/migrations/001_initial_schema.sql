@@ -83,6 +83,16 @@ CREATE POLICY "users_select_as_attorney" ON public.users
     )
   );
 
+-- Founders can read their attorney's user row (for messaging sidebar)
+CREATE POLICY "users_select_as_client" ON public.users
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.attorney_clients ac
+      WHERE ac.client_id = auth.uid()
+        AND ac.attorney_id = users.id
+    )
+  );
+
 
 -- ─────────────────────────────────────────────────────────────
 -- 3. TRADEMARKS
