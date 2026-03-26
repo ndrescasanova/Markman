@@ -24,21 +24,21 @@ export function ScoreGauge({ score }: Props) {
   const colorClass = scoreColor(score);
 
   // SVG arc — semi-circle from left to right
-  // Score 0 = all gray, score 80 = full arc
+  // Score 0 = all gray, score 100 = full arc
   const RADIUS = 80;
   const STROKE = 12;
   const viewSize = (RADIUS + STROKE) * 2;
   const cx = viewSize / 2;
   const cy = viewSize / 2;
   const circumference = Math.PI * RADIUS; // semi-circle circumference
-  const fill = (score / 80) * circumference;
+  const fill = (score / 100) * circumference;
   const gap = circumference - fill;
 
   // Arc color based on score
   const arcColor =
-    score >= 70
+    score >= 60
       ? "#16A34A"   // success green
-      : score >= 50
+      : score >= 40
       ? "#D97706"   // warning amber
       : "#DC2626";  // danger red
 

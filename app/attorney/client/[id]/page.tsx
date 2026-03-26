@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { computeBrandHealthScore } from "@/lib/brand-health/score";
 import { StatusBadge } from "@/components/markman/StatusBadge";
 import { ScoreGauge } from "@/components/markman/ScoreGauge";
+import { AddTrademarkForm } from "@/components/markman/AddTrademarkForm";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -174,9 +175,15 @@ export default async function ClientDetailPage({ params }: Props) {
             <span className="text-xs text-[#9CA3AF]">{tms.length} total</span>
           </div>
 
+          {/* Attorney can add trademarks on behalf of this client */}
+          <div className="px-6 py-4 border-b border-[#E5E7EB] bg-[#FAFAFA]">
+            <AddTrademarkForm founderId={clientId} />
+          </div>
+
           {tms.length === 0 ? (
             <div className="px-6 py-10 text-center">
-              <p className="text-sm text-[#9CA3AF]">No trademarks in portfolio</p>
+              <p className="text-sm font-medium text-[#0A1628] mb-1">No trademarks yet</p>
+              <p className="text-xs text-[#9CA3AF]">Add a trademark below to get started.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
