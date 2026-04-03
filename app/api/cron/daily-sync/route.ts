@@ -15,7 +15,6 @@ import { TSDRUnavailableError } from "@/lib/uspto/types";
 import { NextResponse } from "next/server";
 
 const BATCH_SIZE = 50; // TODO-007: paginated to stay within Vercel Hobby 60s limit
-const RENEWAL_30D_WINDOW = 30;
 
 // Validate cron secret to prevent unauthorized invocations
 function validateCronSecret(request: Request): boolean {
@@ -225,7 +224,7 @@ async function maybeSendRenewalAlert(
   // Send at 30-day and 7-day windows
   if (daysRemaining !== 30 && daysRemaining !== 7) return;
 
-  const eventType = daysRemaining <= RENEWAL_30D_WINDOW ? "renewal_30d" : "renewal_7d";
+  const eventType = daysRemaining <= 7 ? "renewal_7d" : "renewal_30d";
 
   // Per-trademark per-day dedup (serial_number is included in unique key for renewals)
   const { error: insertError } = await admin
